@@ -1,0 +1,29 @@
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { db, auth } from "../firebaseconfig"; // Firebase config import karein
+
+const resetAllTransactions = async () => {
+  try {
+    const user = auth.currentUser; // Logged-in user ko check karein
+    if (!user) {
+      console.log("User not logged in");
+      return;
+    }
+
+    const transactionsRef = collection(db, "transactions");
+    const querySnapshot = await getDocs(transactionsRef);
+
+    // Loop through all documents and delete them
+    const batchDelete = querySnapshot.docs.map((transaction) => {
+      if (transaction.data().userID === user.uid) {
+        return deleteDoc(doc(db, "transactions", transaction.id));
+      }
+      return null;
+    });
+
+    await Promise.all(batchDelete); // Wait for all deletions
+    console.log("All transactions have been reset to zero.");
+  } catch (error) {
+    console.error("Error resetting transactions:", error);
+  }
+};
+export default resetAllTransactions;
